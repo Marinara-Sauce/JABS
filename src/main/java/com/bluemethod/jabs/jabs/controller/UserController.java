@@ -18,7 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * User controller, provides functionality
+ * User controller, communicates between the HTTP responses and
+ * the SQL database
  */
 @RestController
 public class UserController {

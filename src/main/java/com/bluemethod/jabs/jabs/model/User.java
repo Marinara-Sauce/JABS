@@ -1,5 +1,11 @@
 package com.bluemethod.jabs.jabs.model;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,13 +22,81 @@ public class User {
 
     private String username; //Display name for identification
     private String steamID; //If used, the player's SteamID
+    private String dateCreated; //The date the user was created
+    private String lastLoggedIn; //The date the user last logged in
+    
+    private boolean isBanned; //Has the user been perma banned
+    private String bannedUntil; //Temporary bans
 
     public User() { }
 
+    /**
+     * Constructor is called for creating a user with a username and steamID
+     * @param username username of the player
+     * @param steamID steamID of the player
+     */
     public User(String username, String steamID)
     {
         this.setUsername(username);
         this.setSteamID(steamID);
+
+        //Generate new values
+        Date today = new Date();
+        this.setDateCreated(today.toString());
+        this.setLastLoggedIn(today.toString());
+
+        this.setBanned(false);
+        this.setBannedUntil("");
+    }
+
+    /**
+     * Constructor is called if a user is being created from getting
+     * read from the database
+     */
+    public User(String username, String steamID, 
+                String dateCreated, String lastLoggedIn, 
+                boolean isBanned, String bannedUntil)
+    {
+        this.setUsername(username);
+        this.setSteamID(steamID);
+        this.setDateCreated(dateCreated);
+        this.setLastLoggedIn(lastLoggedIn);
+        this.setBanned(isBanned);
+        this.setBannedUntil(bannedUntil);
+    }
+
+    /**
+     * Determine if the player is banned
+     * @return true if the player is banned (temp or perma)
+     */
+    public boolean playerBanned() {
+        return isBanned();
+    }
+
+    /**
+     * Determine if a player is temporarily banned
+     * TODO: Needs further testing
+     * @return a date for when the ban is lifted, empty string if otherwise
+     */
+    public String playerTempBanned() {
+        if (bannedUntil == "")
+            return "";
+
+        Date today = new Date();
+        
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-M-yyyy hh:mm:ss a", Locale.ENGLISH);
+        formatter.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+
+        try {
+            Date bannedDate = formatter.parse(getBannedUntil());
+            if (today.compareTo(bannedDate) >= 0)
+                return "";
+        
+            return getBannedUntil();
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     public int getId() {
@@ -47,6 +121,38 @@ public class User {
 
     public void setSteamID(String steamID) {
         this.steamID = steamID;
+    }
+
+    public String getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(String dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public String getLastLoggedIn() {
+        return lastLoggedIn;
+    }
+
+    public void setLastLoggedIn(String lastLoggedIn) {
+        this.lastLoggedIn = lastLoggedIn;
+    }
+
+    public boolean isBanned() {
+        return isBanned;
+    }
+
+    public void setBanned(boolean isBanned) {
+        this.isBanned = isBanned;
+    }
+
+    public String getBannedUntil() {
+        return bannedUntil.toString();
+    }
+
+    public void setBannedUntil(String bannedUntil) {
+        this.bannedUntil = bannedUntil;
     }
 
     @Override
