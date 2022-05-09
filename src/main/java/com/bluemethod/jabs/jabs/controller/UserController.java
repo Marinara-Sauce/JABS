@@ -8,6 +8,7 @@ import com.bluemethod.jabs.jabs.model.User;
 import com.bluemethod.jabs.jabs.persistence.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,10 +17,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * User controller, provides functionality
+ */
 @RestController
 public class UserController {
     @Autowired
     private UserRepository repo;
+
+    // --- PERMISSIONS --- //
+    @Value("${user.canclientlistall}") private String canclientlistall;
 
     /**
      * Fetches a list of all users
@@ -28,7 +35,10 @@ public class UserController {
     @GetMapping("/user")
     public List<User> listAll ()
     {
-        return repo.findAll();
+        if (canclientlistall.equals("true"))
+            return repo.findAll();
+
+        return null;
     }
 
     /**
@@ -46,6 +56,18 @@ public class UserController {
             return null;
         
         return user.get();
+    }
+
+    /**
+     * Finds a user from a username
+     * 
+     * @param body A string containing the username search query
+     * @return A list of users with that username
+     */
+    @PostMapping("/user/search")
+    public List<User> searchUser(@RequestBody String username)
+    {
+        return repo.findUsersByUsername(username);
     }
 
     /**
