@@ -6,4 +6,5 @@ import com.bluemethod.jabs.jabs.model.User;
 
 public interface UserRepositoryCustom {
     List<User> findUsersByUsername(String username);
+    User findUserBySteamId(String id);
 }

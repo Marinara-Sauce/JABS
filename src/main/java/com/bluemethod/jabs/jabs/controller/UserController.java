@@ -72,6 +72,18 @@ public class UserController {
     }
 
     /**
+     * Finds a user based on the SteamID
+     * 
+     * @param body A string containing the ID
+     * @return The user with that steamID, null if not found
+     */
+    @GetMapping("/user/steam/{id}")
+    public User searchUserBySteam(@PathVariable String id)
+    {
+        return repo.findUserBySteamId(id);
+    }
+
+    /**
      * Creates a new user and saves it to the DB
      * 
      * @param body The new user's information formatted as a map

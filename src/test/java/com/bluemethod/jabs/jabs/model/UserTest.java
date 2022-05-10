@@ -40,6 +40,17 @@ public class UserTest {
     }
 
     @Test
+    void testCreateConstructor()
+    {
+        User user2 = new User(TEST_NAME, TEST_STEAM_ID);
+        assertTrue(user2.getUsername().equals(TEST_NAME));
+        assertTrue(user2.getSteamID().equals(TEST_STEAM_ID));
+        assertTrue(user2.getBannedUntil().equals(""));
+        assertTrue(user2.getDateCreated().equals(user2.getLastLoggedIn()));
+        assertFalse(user2.isBanned());
+    }
+
+    @Test
     void testGetBannedUntil() {
         assertTrue(cut.getBannedUntil().equals(FUTURE));
     }

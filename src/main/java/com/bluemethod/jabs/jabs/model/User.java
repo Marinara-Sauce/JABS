@@ -31,6 +31,25 @@ public class User {
     public User() { }
 
     /**
+     * Generates a new user using a steam id, setting the username
+     * to the players steam name
+     * @param steamID the steamID
+     */
+    public User(String steamID) {
+        this.setSteamID(steamID);
+
+        //Generate new values
+        Date today = new Date();
+        this.setDateCreated(today.toString());
+        this.setLastLoggedIn(today.toString());
+
+        this.setBanned(false);
+        this.setBannedUntil("");
+
+        //Fetch the username
+    }
+
+    /**
      * Constructor is called for creating a user with a username and steamID
      * @param username username of the player
      * @param steamID steamID of the player
@@ -75,7 +94,6 @@ public class User {
 
     /**
      * Determine if a player is temporarily banned
-     * TODO: Needs further testing
      * @return a date for when the ban is lifted, empty string if otherwise
      */
     public String playerTempBanned() {
