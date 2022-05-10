@@ -24,8 +24,7 @@ public class UserTest {
     private final String FUTURE = "22-01-2099 10:15:55 AM";
 
     private final String TEST_NAME = "TEST_USER";
-    private final String TEST_STEAM_ID = "1234";
-
+    private final String TEST_STEAM_ID = "76561197960435530";
     private User cut;
 
     @BeforeEach
@@ -40,14 +39,14 @@ public class UserTest {
     }
 
     @Test
-    void testCreateConstructor()
+    void testSteamIDConstructor()
     {
-        User user2 = new User(TEST_NAME, TEST_STEAM_ID);
-        assertTrue(user2.getUsername().equals(TEST_NAME));
+        User user2 = new User(TEST_STEAM_ID);
         assertTrue(user2.getSteamID().equals(TEST_STEAM_ID));
         assertTrue(user2.getBannedUntil().equals(""));
         assertTrue(user2.getDateCreated().equals(user2.getLastLoggedIn()));
         assertFalse(user2.isBanned());
+        assertTrue(user2.getUsername().equals("Robin"));
     }
 
     @Test

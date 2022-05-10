@@ -1,10 +1,18 @@
 package com.bluemethod.jabs.jabs.model;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
+
+import com.bluemethod.jabs.jabs.utils.HTTPRequest;
+
+import org.springframework.stereotype.Component;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,6 +23,7 @@ import jakarta.persistence.Id;
  * Represents a User, stored in the table user
  */
 @Entity
+@Component
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +44,7 @@ public class User {
      * to the players steam name
      * @param steamID the steamID
      */
+    @SuppressWarnings("unchecked")
     public User(String steamID) {
         this.setSteamID(steamID);
 
@@ -47,25 +57,25 @@ public class User {
         this.setBannedUntil("");
 
         //Fetch the username
-    }
+        String url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/";
+        Map<String, String> params = new HashMap<>();
 
-    /**
-     * Constructor is called for creating a user with a username and steamID
-     * @param username username of the player
-     * @param steamID steamID of the player
-     */
-    public User(String username, String steamID)
-    {
-        this.setUsername(username);
-        this.setSteamID(steamID);
+        //TODO: Store the steam key in some enviroment variable
+        params.put("key", "<insert steam key here>");
+        params.put("steamids", steamID);
 
-        //Generate new values
-        Date today = new Date();
-        this.setDateCreated(today.toString());
-        this.setLastLoggedIn(today.toString());
-
-        this.setBanned(false);
-        this.setBannedUntil("");
+        Map<String, Object> response;
+        try {
+            response = HTTPRequest.getHTTPRequest(url, params);
+            response = (Map<String, Object>) response.get("response");
+            List<Object> player = (List<Object>) response.get("players");
+            response = (Map<String, Object>) player.get(0);
+            this.setUsername((String) response.get("personaname"));
+        } catch (IOException e) {
+            //If we fail to get the username for whatever reason, set it to something random
+            double name = Math.random() * 10000000;
+            this.setUsername(Double.toString(name));
+        }
     }
 
     /**

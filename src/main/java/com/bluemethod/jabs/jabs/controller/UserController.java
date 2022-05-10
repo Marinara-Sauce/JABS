@@ -92,10 +92,9 @@ public class UserController {
     @PostMapping("/user")
     public User createUser(@RequestBody Map<String, String> body)
     {
-        String username = body.get("username");
         String steamID = body.get("steamID");
 
-        return repo.save(new User(username, steamID));
+        return repo.save(new User(steamID));
     }
 
     /**
