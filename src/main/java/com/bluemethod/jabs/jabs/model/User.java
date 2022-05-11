@@ -45,7 +45,7 @@ public class User {
      * @param steamID the steamID
      */
     @SuppressWarnings("unchecked")
-    public User(String steamID) {
+    public User(String steamID, String steamKey) {
         this.setSteamID(steamID);
 
         //Generate new values
@@ -61,7 +61,7 @@ public class User {
         Map<String, String> params = new HashMap<>();
 
         //TODO: Store the steam key in some enviroment variable
-        params.put("key", "<insert steam key here>");
+        params.put("key", steamKey);
         params.put("steamids", steamID);
 
         Map<String, Object> response;

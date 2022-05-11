@@ -29,6 +29,9 @@ public class UserController {
     // --- PERMISSIONS --- //
     @Value("${user.canclientlistall}") private String canclientlistall;
 
+    // --- API Keys --- //
+    @Value("steam.webapikey") private String steamKey;
+
     /**
      * Fetches a list of all users
      * @return A list of every user and their information
@@ -93,8 +96,8 @@ public class UserController {
     public User createUser(@RequestBody Map<String, String> body)
     {
         String steamID = body.get("steamID");
-
-        return repo.save(new User(steamID));
+        
+        return repo.save(new User(steamID, steamKey));
     }
 
     /**
