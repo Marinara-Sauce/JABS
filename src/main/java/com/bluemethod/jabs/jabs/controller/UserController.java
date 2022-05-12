@@ -3,9 +3,13 @@ package com.bluemethod.jabs.jabs.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 
+import com.bluemethod.jabs.jabs.model.Token;
 import com.bluemethod.jabs.jabs.model.User;
+import com.bluemethod.jabs.jabs.persistence.TokenRepository;
 import com.bluemethod.jabs.jabs.persistence.UserRepository;
+import com.bluemethod.jabs.jabs.utils.Hashing;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class UserController {
     @Autowired
-    private UserRepository repo;
+    private UserRepository userRepo;
+
+    @Autowired
+    private TokenRepository tokenRepo;
 
     // --- PERMISSIONS --- //
     @Value("${user.canclientlistall}") private String canclientlistall;
@@ -37,7 +44,7 @@ public class UserController {
     public List<User> listAll ()
     {
         if (canclientlistall.equals("true"))
-            return repo.findAll();
+            return userRepo.findAll();
 
         return null;
     }
@@ -51,7 +58,7 @@ public class UserController {
     public User findUser (@PathVariable String id)
     {
         int userId = Integer.parseInt(id);
-        Optional<User> user = repo.findById(userId);
+        Optional<User> user = userRepo.findById(userId);
 
         if (!user.isPresent())
             return null;
@@ -68,7 +75,7 @@ public class UserController {
     @PostMapping("/user/search")
     public List<User> searchUser(@RequestBody String username)
     {
-        return repo.findUsersByUsername(username);
+        return userRepo.findUsersByUsername(username);
     }
 
     /**
@@ -80,7 +87,7 @@ public class UserController {
     @GetMapping("/user/steam/{id}")
     public User searchUserBySteam(@PathVariable String id)
     {
-        return repo.findUserBySteamId(id);
+        return userRepo.findUserBySteamId(id);
     }
 
     /**
@@ -94,7 +101,7 @@ public class UserController {
     {
         String steamID = body.get("steamID");
 
-        return repo.save(new User(steamID));
+        return userRepo.save(new User(steamID));
     }
 
     /**
@@ -109,7 +116,7 @@ public class UserController {
     {
         int userId = Integer.parseInt(id);
 
-        Optional<User> user = repo.findById(userId);
+        Optional<User> user = userRepo.findById(userId);
 
         if (!user.isPresent())
             return null;
@@ -119,7 +126,7 @@ public class UserController {
         u.setUsername(body.get("username"));
         u.setSteamID(body.get("steamID"));
 
-        return repo.save(u);
+        return userRepo.save(u);
     }
 
     /**
@@ -132,13 +139,74 @@ public class UserController {
     public boolean deleteUser(@PathVariable String id)
     {
         int userId = Integer.parseInt(id);
-        Optional<User> user = repo.findById(userId);
+        Optional<User> user = userRepo.findById(userId);
         
         if (!user.isPresent())
             return false;
         
         User u = user.get();
-        repo.delete(u);
+        userRepo.delete(u);
         return true;
+    }
+
+    /**
+     * TEMP SOLUTION: Login users based on the steam ID
+     * 
+     * @param steamId the users steam id passed through the body
+     * @return the user's token
+     */
+    @PostMapping("/user/login/{steamId}")
+    public String loginUser(@RequestBody Map<String, String> body)
+    {
+        String steamId = body.get("steamID");
+        User u = userRepo.findUserBySteamId(steamId);
+
+        if (u == null)
+            //There'll be a more formal error eventually
+            return "FAILED_LOGIN_INVALID_STEAM_ID";
+        
+        //Generate a random token
+        //TODO: More secure method for RNG
+        long token = new Random().nextLong();
+
+        //Hash our token to send it to the DB
+        byte[] tokenHash = Hashing.getSHA(Long.toString(token));
+        String tokenHashString = Hashing.toHexString(tokenHash);
+
+        Token t = new Token(tokenHashString, u.getId());
+        tokenRepo.save(t);
+
+        return Long.toString(token);
+    }
+    
+    /**
+     * Authenticates a user ticket, this is
+     * what's used by a user to authorize themselves
+     * 
+     * The tokens are stored in the DB table tokens as a
+     * SHA-256 hash
+     * 
+     * @param ticket the ticket
+     * @return the user, null if not found
+     */
+    @GetMapping("/user/auth/{token}")
+    public User authenticateToken(@PathVariable String token)
+    {
+        //Converts the token to a SHA-256 hash, uses this to look it
+        //up in the DB
+        byte[] tokenHash = Hashing.getSHA(token);
+        String tokenHashString = Hashing.toHexString(tokenHash);
+
+        int userId = tokenRepo.getUserIdFromToken(tokenHashString);
+
+        if (userId == -1)
+            return null;
+
+        Optional<User> user = userRepo.findById(userId);
+
+        if (!user.isPresent())
+            return null;
+        
+        return user.get();
     }
 }
