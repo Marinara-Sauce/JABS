@@ -79,6 +79,8 @@ public class User {
             //If we fail to get the username for whatever reason, set it to something random
             double name = Math.random() * 10000000;
             this.setUsername(Double.toString(name));
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
     }
 
@@ -93,6 +95,8 @@ public class User {
         this.setUsername(username);
         this.setPassword(password);
         this.setDisplayName(username);
+
+        this.setSteamID("");
 
         Date today = new Date();
 

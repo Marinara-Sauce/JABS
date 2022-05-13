@@ -91,20 +91,6 @@ public class UserController {
     }
 
     /**
-     * Creates a new user and saves it to the DB
-     * 
-     * @param body The new user's information formatted as a map
-     * @return The created user
-     */
-    @PostMapping("/user")
-    public User createUser(@RequestBody Map<String, String> body)
-    {
-        String steamID = body.get("steamID");
-
-        return userRepo.save(new User(steamID));
-    }
-
-    /**
      * Updates a user by overwriting it in the DB
      * 
      * @param id The ID of the user to update (from SQL)
@@ -220,6 +206,39 @@ public class UserController {
         tokenRepo.save(t);
 
         return Long.toString(token);
+    }
+
+    /**
+     * Similar to login, creates a new user using one of two methods
+     * User/Password, or SteamID
+     * 
+     * @param body either a username/password combo or a steam id
+     * @return the new user
+     */
+    @PostMapping("/user/create")
+    public User createUser(@RequestBody Map<String, String> body)
+    {
+        User newUser;
+
+        //Create based on steam ID
+        if (body.containsKey("steamID"))
+        {
+            newUser = new User(body.get("steamID"));
+        }
+
+        //Create a user based on username and password
+        else if (body.containsKey("username") && body.containsKey("password"))
+        {
+            byte[] passwordHash = Hashing.getSHA(body.get("password"));
+            String passwordHashStr = Hashing.toHexString(passwordHash);
+            newUser = new User(body.get("username"), passwordHashStr);
+        }
+
+        else
+            return null;
+
+        userRepo.save(newUser);
+        return newUser;
     }
     
     /**
