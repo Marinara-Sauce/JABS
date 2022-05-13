@@ -150,21 +150,64 @@ public class UserController {
     }
 
     /**
-     * TEMP SOLUTION: Login users based on the steam ID
+     * Offers methods for the user to log in. Currently supported:
+     * Common user/password where user = username and password = password
+     * Steam where steamID = The user's 64bit token (Soon to be depracated)
      * 
-     * @param steamId the users steam id passed through the body
+     * @param body the requests body with one of the following tags
      * @return the user's token
      */
     @PostMapping("/user/login")
     public String loginUser(@RequestBody Map<String, String> body)
     {
-        String steamId = body.get("steamID");
-        User u = userRepo.findUserBySteamId(steamId);
+        User u;
 
-        if (u == null)
-            //There'll be a more formal error eventually
-            return "FAILED_LOGIN_INVALID_STEAM_ID";
+        //Login via steam id
+        if (body.containsKey("steamID"))
+        {
+            String steamId = body.get("steamID");
+            u = userRepo.findUserBySteamId(steamId);
+
+            if (u == null)
+                return "FAILED_LOGIN_INVALID_STEAM_ID";
+            
+            if (u.getSteamID().isEmpty())
+                return "FAILED_LOGIN_INVALID_METHOD";
+        }
+
+        //Login with username and password
+        else if (body.containsKey("password"))
+        {
+            //Convert the password to a Hash
+            String username = body.get("username");
+            byte[] passwdHash = Hashing.getSHA(body.get("password"));
+            String passwrdHashStr = Hashing.toHexString(passwdHash);
+
+            //Locate the user
+            try
+            {
+                u = userRepo.findUsersByUsername(username).get(0);
+            }
+            catch (IndexOutOfBoundsException e)
+            {
+                return "FAILED_LOGIN_BAD_CREDENTIALS";
+            }
+            
+            if (u == null)
+                return "FAILED_LOGIN_BAD_CREDENTIALS";
+
+            if (u.getPassword().isEmpty())
+                return "FAILED_LOGIN_INVALID_METHOD";
+
+            if (!u.getPassword().equals(passwrdHashStr))
+                return "FAILED_LOGIN_BAD_CREDENTIALS";
+        }
         
+        else
+        {
+            return "FAILED_LOGIN_INVALID_LOGIN_PARAMETERS";
+        }
+
         //Generate a random token
         //TODO: More secure method for RNG
         long token = new Random().nextLong();
