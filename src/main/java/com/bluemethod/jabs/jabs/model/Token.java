@@ -1,5 +1,11 @@
 package com.bluemethod.jabs.jabs.model;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
+
 import org.springframework.stereotype.Component;
 
 import jakarta.persistence.Entity;
@@ -20,12 +26,73 @@ public class Token
 
     private String tokenHash; //token hash
     private int userId; //cooresponding user id
+    private String expirationDate; // Date of the token's expiration
+
+    // -- Expiration Date Information -- //
+
+    //Set these values for how many days and hours
+    //a token should last before becoming invalid
+    
 
     public Token() { }
 
+    /**
+     * Generate a new Token without an expiration date.
+     * An expiration date will be formatted for the user
+     * 
+     * @param tokenHash the token's hash
+     * @param userId the cooresponding user id
+     */
     public Token(String tokenHash, int userId) {
         this.tokenHash = tokenHash;
         this.userId = userId;
+        
+        final int DAYS_TILL_EXPIRE = 1;
+        final int HOURS_TILL_EXPIRE = 0;
+
+        //Generate an expiration date
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.add(Calendar.DATE, DAYS_TILL_EXPIRE);
+        cal.add(Calendar.HOUR_OF_DAY, HOURS_TILL_EXPIRE);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss a");
+        sdf.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+        this.expirationDate = sdf.format(cal.getTime());
+    }
+
+    /**
+     * Generates a new token with a known expiration date
+     * 
+     * @param tokenHash the token's hash
+     * @param userId the cooresponding user id
+     * @param expiration the expiration date
+     */
+    public Token(String tokenHash, int userId, String expiration) {
+        this.tokenHash = tokenHash;
+        this.userId = userId;
+        this.expirationDate = expiration;
+    }
+
+    /**
+     * Determines if a token is expired
+     * @return true if expired, false if still valid
+     */
+    public boolean isExpired() {
+        //Convert the string date to an actual date
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss a");
+        sdf.setTimeZone(TimeZone.getTimeZone("America/New_York"));
+        Date exp;
+
+        try {
+            exp = sdf.parse(expirationDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return true;
+        }
+        
+        Date today = new Date();
+        return today.compareTo(exp) > 0;
     }
 
     public int getId() {
@@ -45,5 +112,11 @@ public class Token
     }
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+    public String getExpiration() {
+        return expirationDate;
+    }
+    public void setExpiration(String expiration) {
+        this.expirationDate = expiration;
     }
 }

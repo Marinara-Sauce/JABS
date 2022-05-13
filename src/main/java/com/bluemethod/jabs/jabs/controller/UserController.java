@@ -155,7 +155,7 @@ public class UserController {
      * @param steamId the users steam id passed through the body
      * @return the user's token
      */
-    @PostMapping("/user/login/{steamId}")
+    @PostMapping("/user/login")
     public String loginUser(@RequestBody Map<String, String> body)
     {
         String steamId = body.get("steamID");
@@ -197,7 +197,13 @@ public class UserController {
         byte[] tokenHash = Hashing.getSHA(token);
         String tokenHashString = Hashing.toHexString(tokenHash);
 
-        int userId = tokenRepo.getUserIdFromToken(tokenHashString);
+        Token t = tokenRepo.getTokenFromHash(tokenHashString);
+        
+        //Check if the token is expired
+        if (t.isExpired())
+            return null;
+
+        int userId = t.getUserId();
 
         if (userId == -1)
             return null;

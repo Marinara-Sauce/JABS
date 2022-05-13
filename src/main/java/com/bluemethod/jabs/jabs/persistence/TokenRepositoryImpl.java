@@ -19,7 +19,7 @@ public class TokenRepositoryImpl implements TokenRepositoryCustom
     private EntityManager entity;
 
     @Override
-    public int getUserIdFromToken(String tokenHash) {
+    public Token getTokenFromHash(String tokenHash) {
         Query query = entity.createNativeQuery(
             "SELECT t.* FROM token as t WHERE t.token_hash LIKE ?"
             , Token.class);
@@ -28,13 +28,13 @@ public class TokenRepositoryImpl implements TokenRepositoryCustom
         try
         {
             @SuppressWarnings("unchecked")
-            List<Token> users = query.getResultList();
+            List<Token> token = query.getResultList();
 
-            return users.get(0).getUserId();
+            return token.get(0);
         }
         catch (Exception e)
         {
-            return -1;
+            return null;
         }
     }
 }
