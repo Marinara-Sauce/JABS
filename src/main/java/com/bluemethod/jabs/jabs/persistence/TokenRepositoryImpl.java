@@ -1,8 +1,11 @@
 package com.bluemethod.jabs.jabs.persistence;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.bluemethod.jabs.jabs.model.Token;
+import com.bluemethod.jabs.jabs.model.User;
+import com.bluemethod.jabs.jabs.utils.Hashing;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,5 +39,25 @@ public class TokenRepositoryImpl implements TokenRepositoryCustom
         {
             return null;
         }
+    }
+
+    @Override
+    public User authenticateToken(UserRepository userRepo, String token) {
+        //Fetch the token via the hash value
+        byte[] tokenHash = Hashing.getSHA(token);
+        String tokenStr = Hashing.toHexString(tokenHash);
+
+        Token t = getTokenFromHash(tokenStr);
+
+        if (t == null)
+            return null;
+        
+
+        Optional<User> u = userRepo.findById(t.getUserId());
+
+        if (!u.isPresent())
+            return null;
+        
+        return u.get();
     }
 }

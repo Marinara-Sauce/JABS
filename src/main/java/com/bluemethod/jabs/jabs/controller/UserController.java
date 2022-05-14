@@ -254,27 +254,28 @@ public class UserController {
     @GetMapping("/user/auth/{token}")
     public User authenticateToken(@PathVariable String token)
     {
-        //Converts the token to a SHA-256 hash, uses this to look it
-        //up in the DB
+        return tokenRepo.authenticateToken(userRepo, token);
+    }
+
+    /**
+     * Logs a user out based on their token, deleting the
+     * token from the table.
+     * 
+     * @param token the token to log out
+     * @return SUCCCESS if worked, NOT_FOUND if failed
+     */
+    @GetMapping("/user/logout/{token}")
+    public String logout(@PathVariable String token)
+    {
         byte[] tokenHash = Hashing.getSHA(token);
-        String tokenHashString = Hashing.toHexString(tokenHash);
+        String tokenHashStr = Hashing.toHexString(tokenHash);
 
-        Token t = tokenRepo.getTokenFromHash(tokenHashString);
+        Token t = tokenRepo.getTokenFromHash(tokenHashStr);
+
+        if (t == null)
+            return "LOGOUT_FAILED_INVALID_TOKEN";
         
-        //Check if the token is expired
-        if (t.isExpired())
-            return null;
-
-        int userId = t.getUserId();
-
-        if (userId == -1)
-            return null;
-
-        Optional<User> user = userRepo.findById(userId);
-
-        if (!user.isPresent())
-            return null;
-        
-        return user.get();
+        tokenRepo.delete(t);
+        return "SUCCESS";
     }
 }
