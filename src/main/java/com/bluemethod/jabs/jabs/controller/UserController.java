@@ -35,6 +35,10 @@ public class UserController {
 
     // --- PERMISSIONS --- //
     @Value("${user.canclientlistall}") private String canclientlistall;
+    
+    // --- CONFIG SETTINGS --- //
+    @Value("${user.tokenDaysTillExpire}") private int daysTillExpire;
+    @Value("${user.tokenHoursTillExpire}") private int hoursTillExpire;
 
     /**
      * Fetches a list of all users
@@ -202,7 +206,7 @@ public class UserController {
         byte[] tokenHash = Hashing.getSHA(Long.toString(token));
         String tokenHashString = Hashing.toHexString(tokenHash);
 
-        Token t = new Token(tokenHashString, u.getId());
+        Token t = new Token(tokenHashString, u.getId(), daysTillExpire, hoursTillExpire);
         tokenRepo.save(t);
 
         return Long.toString(token);

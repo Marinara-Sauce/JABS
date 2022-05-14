@@ -63,7 +63,7 @@ public class User {
         Map<String, String> params = new HashMap<>();
 
         //TODO: Store the steam key in some enviroment variable
-        params.put("key", "<insert steam key here>");
+        params.put("key", "22240C044D4271252789763016CE9F45");
         params.put("steamids", steamID);
 
         Map<String, Object> response;

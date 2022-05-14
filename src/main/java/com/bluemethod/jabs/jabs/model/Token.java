@@ -26,13 +26,7 @@ public class Token
 
     private String tokenHash; //token hash
     private int userId; //cooresponding user id
-    private String expirationDate; // Date of the token's expiration
-
-    // -- Expiration Date Information -- //
-
-    //Set these values for how many days and hours
-    //a token should last before becoming invalid
-    
+    private String expirationDate; // Date of the token's expiration    
 
     public Token() { }
 
@@ -42,19 +36,18 @@ public class Token
      * 
      * @param tokenHash the token's hash
      * @param userId the cooresponding user id
+     * @param daysTillExpire how many days the token is valid
+     * @param hoursTillExpire how many hours the token is valid
      */
-    public Token(String tokenHash, int userId) {
+    public Token(String tokenHash, int userId, int daysTillExpire, int hoursTillExpire) {
         this.tokenHash = tokenHash;
         this.userId = userId;
-        
-        final int DAYS_TILL_EXPIRE = 1;
-        final int HOURS_TILL_EXPIRE = 0;
 
         //Generate an expiration date
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
-        cal.add(Calendar.DATE, DAYS_TILL_EXPIRE);
-        cal.add(Calendar.HOUR_OF_DAY, HOURS_TILL_EXPIRE);
+        cal.add(Calendar.DATE, daysTillExpire);
+        cal.add(Calendar.HOUR_OF_DAY, hoursTillExpire);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss a");
         sdf.setTimeZone(TimeZone.getTimeZone("America/New_York"));

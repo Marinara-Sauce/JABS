@@ -11,11 +11,13 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * Test class for user
  */
+@Tag("Model-tier")
 public class UserTest {
 
     private Date today = new Date();
@@ -24,6 +26,7 @@ public class UserTest {
     private final String FUTURE = "22-01-2099 10:15:55 AM";
 
     private final String TEST_NAME = "TEST_USER";
+    private final String TEST_PASSWD = "123";
     private final String TEST_STEAM_ID = "76561197960435530";
     private User cut;
 
@@ -39,6 +42,19 @@ public class UserTest {
     }
 
     @Test
+    void testUsernameConstructor()
+    {
+        User user2 = new User(TEST_NAME, TEST_PASSWD);
+
+        assertTrue(user2.getSteamID().isEmpty());
+        assertTrue(user2.getUsername().equals(TEST_NAME));
+        assertTrue(user2.getPassword().equals(TEST_PASSWD));
+        assertTrue(user2.getBannedUntil().isEmpty());
+        assertFalse(user2.isBanned());
+        assertTrue(user2.getDisplayName().equals(TEST_NAME));
+    }
+
+    @Test
     void testSteamIDConstructor()
     {
         User user2 = new User(TEST_STEAM_ID);
@@ -47,6 +63,7 @@ public class UserTest {
         assertTrue(user2.getDateCreated().equals(user2.getLastLoggedIn()));
         assertFalse(user2.isBanned());
         assertTrue(user2.getUsername().equals("Robin"));
+        assertTrue(user2.getPassword().isEmpty());
     }
 
     @Test
