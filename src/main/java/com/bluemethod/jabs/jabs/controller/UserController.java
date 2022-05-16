@@ -41,6 +41,23 @@ public class UserController {
     @Value("${user.tokenHoursTillExpire}") private int hoursTillExpire;
 
     /**
+     * Initializes a UserController with a knwon userRepo and tokenRepo
+     * Generally used for unit testing only
+     * @param userRepo user repository to use
+     * @param tokenRepo token repository to use
+     */
+    public UserController(UserRepository userRepo, TokenRepository tokenRepo)
+    {
+        this.userRepo = userRepo;
+        this.tokenRepo = tokenRepo;
+
+        //Because these are used in junits, this cannot be null
+        this.canclientlistall = "true";
+    }
+
+    public UserController() { }
+
+    /**
      * Fetches a list of all users
      * @return A list of every user and their information
      */
@@ -160,9 +177,6 @@ public class UserController {
 
             if (u == null)
                 return "FAILED_LOGIN_INVALID_STEAM_ID";
-            
-            if (u.getSteamID().isEmpty())
-                return "FAILED_LOGIN_INVALID_METHOD";
         }
 
         //Login with username and password
@@ -182,12 +196,16 @@ public class UserController {
             {
                 return "FAILED_LOGIN_BAD_CREDENTIALS";
             }
+            catch (NullPointerException e)
+            {
+                return "FAILED_LOGIN_BAD_CREDENTIALS";
+            }
             
             if (u == null)
                 return "FAILED_LOGIN_BAD_CREDENTIALS";
 
             if (u.getPassword().isEmpty())
-                return "FAILED_LOGIN_INVALID_METHOD";
+                return "FAILED_LOGIN_BAD_CREDENTIALS";
 
             if (!u.getPassword().equals(passwrdHashStr))
                 return "FAILED_LOGIN_BAD_CREDENTIALS";

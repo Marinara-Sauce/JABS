@@ -75,7 +75,7 @@ public class User {
             this.setUsername((String) response.get("personaname"));
             this.setPassword("");
             this.setDisplayName(this.getUsername());
-        } catch (IOException e) {
+        } catch (IOException | IndexOutOfBoundsException e ) {
             //If we fail to get the username for whatever reason, set it to something random
             double name = Math.random() * 10000000;
             this.setUsername(Double.toString(name));

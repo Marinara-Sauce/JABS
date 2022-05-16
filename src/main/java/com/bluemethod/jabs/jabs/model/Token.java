@@ -62,9 +62,9 @@ public class Token
      * @param expiration the expiration date
      */
     public Token(String tokenHash, int userId, String expiration) {
-        this.tokenHash = tokenHash;
-        this.userId = userId;
-        this.expirationDate = expiration;
+        this.setTokenHash(tokenHash);
+        this.setUserId(userId);
+        this.setExpiration(expiration);
     }
 
     /**
