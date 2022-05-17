@@ -163,6 +163,11 @@ public class UserControllerTest {
         //Check for bad login alltogether
         body.clear();
         assertTrue(cut.loginUser(body).equals("FAILED_LOGIN_INVALID_LOGIN_PARAMETERS"));
+
+        //Test for throwing errors
+        body.put("password", "abc");
+        when(mockUserRepo.findUsersByUsername(any())).thenThrow(IndexOutOfBoundsException.class);
+        assertTrue(cut.loginUser(body).equals("FAILED_LOGIN_BAD_CREDENTIALS"));
     }
 
     @Test
@@ -181,16 +186,23 @@ public class UserControllerTest {
 
     @Test
     void testSearchUser() {
+        List<User> userList = new ArrayList<>();
+        userList.add(new User());
+        userList.add(new User());
 
-    }
+        when(mockUserRepo.findUsersByUsername(any())).thenReturn(userList);
+        when(mockUserRepo.findUserBySteamId(any())).thenReturn(new User());
 
-    @Test
-    void testSearchUserBySteam() {
-
+        assertEquals(cut.searchUser("some username").size(), 2);
+        assertNotNull(cut.searchUserBySteam("1"));
     }
 
     @Test
     void testUpdateUser() {
+
+        when(mockUserRepo.save(any())).thenReturn(new User());
+
+        assertNotNull(cut.updateUser("1", new User()));
 
     }
 

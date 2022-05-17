@@ -115,25 +115,17 @@ public class UserController {
      * Updates a user by overwriting it in the DB
      * 
      * @param id The ID of the user to update (from SQL)
-     * @param body The new user to overwrite the ID
+     * @param user the new user to overwrite at that id
      * @return The new User
      */
     @PutMapping("/user/{id}")
-    public User updateUser(@PathVariable String id, @RequestBody Map<String, String> body)
+    public User updateUser(@PathVariable String id, @RequestBody User user)
     {
         int userId = Integer.parseInt(id);
 
-        Optional<User> user = userRepo.findById(userId);
+        user.setId(userId);
 
-        if (!user.isPresent())
-            return null;
-        
-        User u = user.get();
-
-        u.setUsername(body.get("username"));
-        u.setSteamID(body.get("steamID"));
-
-        return userRepo.save(u);
+        return userRepo.save(user);
     }
 
     /**
