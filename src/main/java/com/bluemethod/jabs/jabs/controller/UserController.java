@@ -13,6 +13,8 @@ import com.bluemethod.jabs.jabs.utils.Hashing;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,12 +64,12 @@ public class UserController {
      * @return A list of every user and their information
      */
     @GetMapping("/user")
-    public List<User> listAll ()
+    public ResponseEntity<List<User>> listAll ()
     {
         if (canclientlistall.equals("true"))
-            return userRepo.findAll();
+            return new ResponseEntity<List<User>>(userRepo.findAll(), HttpStatus.OK);
 
-        return null;
+        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -76,15 +78,15 @@ public class UserController {
      * @return The user object
      */
     @GetMapping("/user/{id}")
-    public User findUser (@PathVariable String id)
+    public ResponseEntity<User> findUser (@PathVariable String id)
     {
         int userId = Integer.parseInt(id);
         Optional<User> user = userRepo.findById(userId);
 
         if (!user.isPresent())
-            return null;
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         
-        return user.get();
+        return new ResponseEntity<User>(user.get(), HttpStatus.OK);
     }
 
     /**
@@ -94,9 +96,9 @@ public class UserController {
      * @return A list of users with that username
      */
     @PostMapping("/user/search")
-    public List<User> searchUser(@RequestBody String username)
+    public ResponseEntity<List<User>> searchUser(@RequestBody String username)
     {
-        return userRepo.findUsersByUsername(username);
+        return new ResponseEntity<List<User>>(userRepo.findUsersByUsername(username), HttpStatus.OK);
     }
 
     /**
@@ -106,9 +108,9 @@ public class UserController {
      * @return The user with that steamID, null if not found
      */
     @GetMapping("/user/steam/{id}")
-    public User searchUserBySteam(@PathVariable String id)
+    public ResponseEntity<User> searchUserBySteam(@PathVariable String id)
     {
-        return userRepo.findUserBySteamId(id);
+        return new ResponseEntity<User>(userRepo.findUserBySteamId(id), HttpStatus.OK);
     }
 
     /**
@@ -119,13 +121,13 @@ public class UserController {
      * @return The new User
      */
     @PutMapping("/user/{id}")
-    public User updateUser(@PathVariable String id, @RequestBody User user)
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user)
     {
         int userId = Integer.parseInt(id);
 
         user.setId(userId);
 
-        return userRepo.save(user);
+        return new ResponseEntity<User>(userRepo.save(user), HttpStatus.OK);
     }
 
     /**
@@ -135,17 +137,17 @@ public class UserController {
      * @return true/false if deleted successfully
      */
     @DeleteMapping("/user/{id}")
-    public boolean deleteUser(@PathVariable String id)
+    public ResponseEntity<User> deleteUser(@PathVariable String id)
     {
         int userId = Integer.parseInt(id);
         Optional<User> user = userRepo.findById(userId);
         
         if (!user.isPresent())
-            return false;
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         
         User u = user.get();
         userRepo.delete(u);
-        return true;
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     /**
@@ -157,7 +159,7 @@ public class UserController {
      * @return the user's token
      */
     @PostMapping("/user/login")
-    public String loginUser(@RequestBody Map<String, String> body)
+    public ResponseEntity<String> loginUser(@RequestBody Map<String, String> body)
     {
         User u;
 
@@ -168,7 +170,7 @@ public class UserController {
             u = userRepo.findUserBySteamId(steamId);
 
             if (u == null)
-                return "FAILED_LOGIN_INVALID_STEAM_ID";
+                return new ResponseEntity<String>("FAILED_LOGIN_INVALID_STEAM_ID", HttpStatus.NOT_FOUND);
         }
 
         //Login with username and password
@@ -186,26 +188,26 @@ public class UserController {
             }
             catch (IndexOutOfBoundsException e)
             {
-                return "FAILED_LOGIN_BAD_CREDENTIALS";
+                return new ResponseEntity<String>("FAILED_LOGIN_BAD_CREDENTIALS", HttpStatus.UNAUTHORIZED);
             }
             catch (NullPointerException e)
             {
-                return "FAILED_LOGIN_BAD_CREDENTIALS";
+                return new ResponseEntity<String>("FAILED_LOGIN_BAD_CREDENTIALS", HttpStatus.UNAUTHORIZED);
             }
             
             if (u == null)
-                return "FAILED_LOGIN_BAD_CREDENTIALS";
+                return new ResponseEntity<String>("FAILED_LOGIN_BAD_CREDENTIALS", HttpStatus.UNAUTHORIZED);
 
             if (u.getPassword().isEmpty())
-                return "FAILED_LOGIN_BAD_CREDENTIALS";
+                return new ResponseEntity<String>("FAILED_LOGIN_BAD_CREDENTIALS", HttpStatus.UNAUTHORIZED);
 
             if (!u.getPassword().equals(passwrdHashStr))
-                return "FAILED_LOGIN_BAD_CREDENTIALS";
+                return new ResponseEntity<String>("FAILED_LOGIN_BAD_CREDENTIALS", HttpStatus.UNAUTHORIZED);
         }
         
         else
         {
-            return "FAILED_LOGIN_INVALID_LOGIN_PARAMETERS";
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         //Generate a random token
@@ -219,7 +221,7 @@ public class UserController {
         Token t = new Token(tokenHashString, u.getId(), daysTillExpire, hoursTillExpire);
         tokenRepo.save(t);
 
-        return Long.toString(token);
+        return new ResponseEntity<String>(Long.toString(token), HttpStatus.OK);
     }
 
     /**
@@ -230,7 +232,7 @@ public class UserController {
      * @return the new user
      */
     @PostMapping("/user/create")
-    public User createUser(@RequestBody Map<String, String> body)
+    public ResponseEntity<User> createUser(@RequestBody Map<String, String> body)
     {
         User newUser;
 
@@ -249,10 +251,10 @@ public class UserController {
         }
 
         else
-            return null;
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         userRepo.save(newUser);
-        return newUser;
+        return new ResponseEntity<User>(newUser, HttpStatus.OK);
     }
     
     /**
@@ -266,9 +268,9 @@ public class UserController {
      * @return the user, null if not found
      */
     @GetMapping("/user/auth/{token}")
-    public User authenticateToken(@PathVariable String token)
+    public ResponseEntity<User> authenticateToken(@PathVariable String token)
     {
-        return tokenRepo.authenticateToken(userRepo, token);
+        return new ResponseEntity<User>(tokenRepo.authenticateToken(userRepo, token), HttpStatus.OK);
     }
 
     /**
@@ -279,7 +281,7 @@ public class UserController {
      * @return SUCCCESS if worked, NOT_FOUND if failed
      */
     @GetMapping("/user/logout/{token}")
-    public String logout(@PathVariable String token)
+    public ResponseEntity<User> logout(@PathVariable String token)
     {
         byte[] tokenHash = Hashing.getSHA(token);
         String tokenHashStr = Hashing.toHexString(tokenHash);
@@ -287,9 +289,9 @@ public class UserController {
         Token t = tokenRepo.getTokenFromHash(tokenHashStr);
 
         if (t == null)
-            return "LOGOUT_FAILED_INVALID_TOKEN";
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         
         tokenRepo.delete(t);
-        return "SUCCESS";
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
