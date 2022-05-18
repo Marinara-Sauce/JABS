@@ -47,7 +47,7 @@ public class User {
      * @param steamID the steamID
      */
     @SuppressWarnings("unchecked")
-    public User(String steamID) {
+    public User(String steamID, String webApiKey) {
         this.setSteamID(steamID);
 
         //Generate new values
@@ -63,7 +63,7 @@ public class User {
         Map<String, String> params = new HashMap<>();
 
         //TODO: Store the steam key in some enviroment variable
-        params.put("key", "22240C044D4271252789763016CE9F45");
+        params.put("key", webApiKey);
         params.put("steamids", steamID);
 
         Map<String, Object> response;
@@ -89,8 +89,9 @@ public class User {
      * 
      * @param username username to use
      * @param password password hash (SHA-256) to use
+     * @param isPassword does not have any effect, only used for polymorphism
      */
-    public User(String username, String password)
+    public User(String username, String password, boolean isPassword)
     {
         this.setUsername(username);
         this.setPassword(password);

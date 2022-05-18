@@ -41,6 +41,7 @@ public class UserController {
     // --- CONFIG SETTINGS --- //
     @Value("${user.tokenDaysTillExpire}") private int daysTillExpire;
     @Value("${user.tokenHoursTillExpire}") private int hoursTillExpire;
+    @Value("${steam.webapikey}") private String apiKey;
 
     /**
      * Initializes a UserController with a knwon userRepo and tokenRepo
@@ -239,7 +240,7 @@ public class UserController {
         //Create based on steam ID
         if (body.containsKey("steamID"))
         {
-            newUser = new User(body.get("steamID"));
+            newUser = new User(body.get("steamID"), apiKey);
         }
 
         //Create a user based on username and password
@@ -247,7 +248,7 @@ public class UserController {
         {
             byte[] passwordHash = Hashing.getSHA(body.get("password"));
             String passwordHashStr = Hashing.toHexString(passwordHash);
-            newUser = new User(body.get("username"), passwordHashStr);
+            newUser = new User(body.get("username"), passwordHashStr, true);
         }
 
         else
@@ -291,7 +292,7 @@ public class UserController {
         if (t == null)
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         
-        tokenRepo.delete(t);
+        tokenRepo.delete(t); 
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
