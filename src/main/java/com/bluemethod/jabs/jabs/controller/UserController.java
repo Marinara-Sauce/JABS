@@ -1,5 +1,7 @@
 package com.bluemethod.jabs.jabs.controller;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,6 +12,7 @@ import com.bluemethod.jabs.jabs.model.User;
 import com.bluemethod.jabs.jabs.persistence.TokenRepository;
 import com.bluemethod.jabs.jabs.persistence.UserRepository;
 import com.bluemethod.jabs.jabs.utils.Hashing;
+import com.bluemethod.jabs.jabs.utils.ServerAuth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,8 +22,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -65,9 +68,9 @@ public class UserController {
      * @return A list of every user and their information
      */
     @GetMapping("/user")
-    public ResponseEntity<List<User>> listAll ()
+    public ResponseEntity<List<User>> listAll (@RequestHeader Map<String, String> header)
     {
-        if (canclientlistall.equals("true"))
+        if (canclientlistall.equals("true") || ServerAuth.authToken(header))
             return new ResponseEntity<List<User>>(userRepo.findAll(), HttpStatus.OK);
 
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -81,7 +84,7 @@ public class UserController {
     @GetMapping("/user/{id}")
     public ResponseEntity<User> findUser (@PathVariable String id)
     {
-        int userId = Integer.parseInt(id);
+        int userId = Integer.parseInt(id); 
         Optional<User> user = userRepo.findById(userId);
 
         if (!user.isPresent())
@@ -115,31 +118,18 @@ public class UserController {
     }
 
     /**
-     * Updates a user by overwriting it in the DB
-     * 
-     * @param id The ID of the user to update (from SQL)
-     * @param user the new user to overwrite at that id
-     * @return The new User
-     */
-    @PutMapping("/user/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user)
-    {
-        int userId = Integer.parseInt(id);
-
-        user.setId(userId);
-
-        return new ResponseEntity<User>(userRepo.save(user), HttpStatus.OK);
-    }
-
-    /**
      * Deletes a certain user by their ID
+     * Only the server can run this command
      * 
      * @param id the user's ID to delete
      * @return true/false if deleted successfully
      */
     @DeleteMapping("/user/{id}")
-    public ResponseEntity<User> deleteUser(@PathVariable String id)
+    public ResponseEntity<User> deleteUser(@PathVariable String id, @RequestHeader Map<String, String> header)
     {
+        if (!ServerAuth.authToken(header))
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+
         int userId = Integer.parseInt(id);
         Optional<User> user = userRepo.findById(userId);
         
@@ -295,4 +285,43 @@ public class UserController {
         tokenRepo.delete(t); 
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    //User modification functions
+
+    /**
+     * Invokes a perma ban on a user, setting banned to true
+     * 
+     * @param body the body of the request where - id: user id, banlength: ban length (in minutes)
+     * set to -1 for a permanent ban
+     * 
+     * @return A response entity, SUCCESS if worked, error otherwise
+     */
+    // @PostMapping("/user/ban")
+    // public ResponseEntity<String> banUser(@RequestBody Map<String, String> body, @RequestHeader Map<String, String> header)
+    // {
+    //     if (!ServerAuth.authToken(header)) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+
+    //     if (!body.containsKey("id") || !body.containsKey("banlength"))
+    //         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        
+    //     String userId = body.get("id");
+    //     int banLength = Integer.parseInt(body.get("banlength"));
+
+    //     User user = userRepo.getReferenceById(Integer.parseInt(userId));
+
+    //     if (user == null)
+    //         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+    //     if (banLength < 0)
+    //         user.setBanned(true);
+
+    //     else
+    //     {
+    //         Date today = new Date();
+    //         Calendar c = Calendar.getInstance();
+    //         c.setTime(today);
+            
+    //         if ()
+    //     }
+    // }
 }
