@@ -45,7 +45,9 @@ public class User {
      * @param steamID the steamID
      */
     @SuppressWarnings("unchecked")
+
     public User(String steamID, String webApiKey) {
+
         this.setSteamID(steamID);
 
         //Generate new values

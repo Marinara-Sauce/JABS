@@ -71,6 +71,9 @@ public class UserController {
         random = SecureRandom.getInstanceStrong();
     }
 
+    // --- API Keys --- //
+    @Value("steam.webapikey") private String steamKey;
+
     /**
      * Fetches a list of all users
      * @return A list of every user and their information
