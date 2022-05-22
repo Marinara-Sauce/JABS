@@ -59,7 +59,6 @@ public class User {
 
         this.setBan(null);
 
-        //TODO: Store the steam key in some enviroment variable
         params.put("key", webApiKey);
         params.put("steamids", steamID);
 
