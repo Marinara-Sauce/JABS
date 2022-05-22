@@ -1,16 +1,15 @@
 package com.bluemethod.jabs.jabs.model;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 import com.bluemethod.jabs.jabs.utils.HTTPRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import org.springframework.stereotype.Component;
 
@@ -35,9 +34,8 @@ public class User {
     private String steamID; //If used, the player's SteamID
     private String dateCreated; //The date the user was created
     private String lastLoggedIn; //The date the user last logged in
-    
-    private boolean isBanned; //Has the user been perma banned
-    private String bannedUntil; //Temporary bans
+
+    private String ban; //JSON value of the user's ban
 
     public User() { }
 
@@ -55,12 +53,11 @@ public class User {
         this.setDateCreated(today.toString());
         this.setLastLoggedIn(today.toString());
 
-        this.setBanned(false);
-        this.setBannedUntil("");
-
         //Fetch the username
         String url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/";
         Map<String, String> params = new HashMap<>();
+
+        this.setBan(null);
 
         //TODO: Store the steam key in some enviroment variable
         params.put("key", webApiKey);
@@ -104,8 +101,7 @@ public class User {
         this.setDateCreated(today.toString());
         this.setLastLoggedIn(today.toString());
 
-        this.setBanned(false);
-        this.setBannedUntil("");
+        this.setBan(null);
     }
 
     /**
@@ -114,14 +110,13 @@ public class User {
      */
     public User(String username, String steamID, 
                 String dateCreated, String lastLoggedIn, 
-                boolean isBanned, String bannedUntil)
+                Ban ban)
     {
         this.setUsername(username);
         this.setSteamID(steamID);
         this.setDateCreated(dateCreated);
         this.setLastLoggedIn(lastLoggedIn);
-        this.setBanned(isBanned);
-        this.setBannedUntil(bannedUntil);
+        this.setBan(ban);
     }
 
     /**
@@ -129,32 +124,9 @@ public class User {
      * @return true if the player is banned (temp or perma)
      */
     public boolean playerBanned() {
-        return isBanned();
-    }
+        if (ban == null) return false;
 
-    /**
-     * Determine if a player is temporarily banned
-     * @return a date for when the ban is lifted, empty string if otherwise
-     */
-    public String playerTempBanned() {
-        if (bannedUntil == "")
-            return "";
-
-        Date today = new Date();
-        
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-M-yyyy hh:mm:ss a", Locale.ENGLISH);
-        formatter.setTimeZone(TimeZone.getTimeZone("America/New_York"));
-
-        try {
-            Date bannedDate = formatter.parse(getBannedUntil());
-            if (today.compareTo(bannedDate) >= 0)
-                return "";
-        
-            return getBannedUntil();
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return "";
-        }
+        return this.getBan().banActive();
     }
 
     public int getId() {
@@ -197,22 +169,6 @@ public class User {
         this.lastLoggedIn = lastLoggedIn;
     }
 
-    public boolean isBanned() {
-        return isBanned;
-    }
-
-    public void setBanned(boolean isBanned) {
-        this.isBanned = isBanned;
-    }
-
-    public String getBannedUntil() {
-        return bannedUntil.toString();
-    }
-
-    public void setBannedUntil(String bannedUntil) {
-        this.bannedUntil = bannedUntil;
-    }
-
     public String getPassword() {
         return this.password;
     }
@@ -227,6 +183,27 @@ public class User {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public Ban getBan() {
+        if (this.ban == null || this.ban.isEmpty()) return null;
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(this.ban, Ban.class);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void setBan(Ban ban) {
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        try {
+            this.ban = ow.writeValueAsString(ban);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

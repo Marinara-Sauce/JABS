@@ -3,6 +3,8 @@ package com.bluemethod.jabs.jabs.utils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
@@ -21,6 +23,8 @@ public class ServerAuth
 
     private static String serverToken;
 
+    private static Random random;
+
     /**
      * Initializes the token class
      * Creates a new token if data/server_token.txt does not exist
@@ -28,6 +32,12 @@ public class ServerAuth
      */
     public static void initToken()
     {
+        try {
+            random = SecureRandom.getInstanceStrong();
+        } catch (NoSuchAlgorithmException e1) {
+            e1.printStackTrace();
+        }
+
         try
         {
             File file = new File(FILE_NAME);
@@ -83,15 +93,16 @@ public class ServerAuth
 
         if (file.exists())
         {
-            file.delete();
+            if (!file.delete())
+            {
+                System.err.println("Failed to delete token file!");
+            }
         }
 
         // Gen the new token
         int leftLimit = 97; //a on ASCII
         int rightLimit = 122; //z on ASCII
         int tokenLen = 64;
-
-        Random random = new Random();
 
         String token = random.ints(leftLimit, rightLimit + 1)
             .limit(tokenLen)
@@ -100,7 +111,7 @@ public class ServerAuth
 
         serverToken = token;
 
-        FileWriter writer;
+        FileWriter writer = null;;
 
         try {
             writer = new FileWriter(file);

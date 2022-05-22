@@ -1,10 +1,13 @@
 package com.bluemethod.jabs.jabs.controller;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
+import com.bluemethod.jabs.jabs.model.Ban;
 import com.bluemethod.jabs.jabs.model.Token;
 import com.bluemethod.jabs.jabs.model.User;
 import com.bluemethod.jabs.jabs.persistence.TokenRepository;
@@ -44,22 +47,29 @@ public class UserController {
     @Value("${user.tokenHoursTillExpire}") private int hoursTillExpire;
     @Value("${steam.webapikey}") private String apiKey;
 
+    private Random random;
+
     /**
      * Initializes a UserController with a knwon userRepo and tokenRepo
      * Generally used for unit testing only
      * @param userRepo user repository to use
      * @param tokenRepo token repository to use
+     * @throws NoSuchAlgorithmException
      */
-    public UserController(UserRepository userRepo, TokenRepository tokenRepo)
+    public UserController(UserRepository userRepo, TokenRepository tokenRepo) throws NoSuchAlgorithmException
     {
         this.userRepo = userRepo;
         this.tokenRepo = tokenRepo;
 
         //Because these are used in junits, this cannot be null
         this.canclientlistall = "true";
+
+        random = SecureRandom.getInstanceStrong();
     }
 
-    public UserController() { }
+    public UserController() throws NoSuchAlgorithmException { 
+        random = SecureRandom.getInstanceStrong();
+    }
 
     /**
      * Fetches a list of all users
@@ -199,9 +209,7 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        //Generate a random token
-        //TODO: More secure method for RNG
-        long token = new Random().nextLong();
+        long token = random.nextLong();
 
         //Hash our token to send it to the DB
         byte[] tokenHash = Hashing.getSHA(Long.toString(token));
@@ -287,39 +295,72 @@ public class UserController {
     //User modification functions
 
     /**
-     * Invokes a perma ban on a user, setting banned to true
-     * 
-     * @param body the body of the request where - id: user id, banlength: ban length (in minutes)
-     * set to -1 for a permanent ban
-     * 
-     * @return A response entity, SUCCESS if worked, error otherwise
+     * Sets a user ban
+     * @param body body of the request must be mapped as follows
+     * id = the users id
+     * perma = true if the user is perma banned
+     * days = number of days to be banned
+     * hours = number of hours to be banned
+     * minutes = number of minutes to be banned
+     * @param header the header of the request containing the server token
+     * @return the http response, forbidden if there's a bad token, bad request if
+     * malformed, not found if the user id doesn't exist, or ok if successful.
      */
-    // @PostMapping("/user/ban")
-    // public ResponseEntity<String> banUser(@RequestBody Map<String, String> body, @RequestHeader Map<String, String> header)
-    // {
-    //     if (!ServerAuth.authToken(header)) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    @PostMapping("/user/ban")
+    public ResponseEntity<User> banUser(@RequestBody Map<String, String> body, @RequestHeader Map<String, String> header)
+    {
+        if (!ServerAuth.authToken(header)) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 
-    //     if (!body.containsKey("id") || !body.containsKey("banlength"))
-    //         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (!body.containsKey("id")) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        int userId = Integer.parseInt(body.get("id"));
+        Optional<User> u = userRepo.findById(userId);
+
+        if (!u.isPresent()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        User user = u.get();
+
+        if (body.containsKey("perma") && body.get("perma").equals("true"))
+            user.setBan(new Ban(true));
         
-    //     String userId = body.get("id");
-    //     int banLength = Integer.parseInt(body.get("banlength"));
+        else
+        {
+            int daysBanned = 0;
+            int hoursBanned = 0;
+            int minutesBanned = 0;
 
-    //     User user = userRepo.getReferenceById(Integer.parseInt(userId));
+            if (body.containsKey("days"))
+                daysBanned = Integer.parseInt(body.get("days"));
 
-    //     if (user == null)
-    //         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            if (body.containsKey("hours"))
+                hoursBanned = Integer.parseInt(body.get("hours"));
 
-    //     if (banLength < 0)
-    //         user.setBanned(true);
-
-    //     else
-    //     {
-    //         Date today = new Date();
-    //         Calendar c = Calendar.getInstance();
-    //         c.setTime(today);
+            if (body.containsKey("minutes"))
+                minutesBanned = Integer.parseInt(body.get("minutes"));
             
-    //         if ()
-    //     }
-    // }
+            user.setBan(new Ban(daysBanned, hoursBanned, minutesBanned));
+        }
+
+        userRepo.save(user);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    /**
+     * Checks a user's ban status
+     * 
+     * @param id the users id to check
+     * @return if the user is banned
+     */
+    @GetMapping("/user/ban/{id}")
+    public ResponseEntity<Boolean> getIsBanned(@PathVariable String id)
+    {
+        int userId = Integer.parseInt(id);
+        Optional<User> u = userRepo.findById(userId);
+
+        if (!u.isPresent()) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        User user = u.get();
+
+        return new ResponseEntity<Boolean>(user.playerBanned(), HttpStatus.OK);
+    }
 }
