@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.0-M2</version>
+		<version>2.7.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.bluemethod.jabs</groupId>
@@ -16,178 +16,71 @@
 	<properties>
 		<java.version>18</java.version>
 	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.netflix.graphql.dgs</groupId>
+				<artifactId>graphql-dgs-platform-dependencies</artifactId>
+				<!-- The DGS BOM/platform dependency. This is the only place you set version of DGS -->
+				<version>4.9.16</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<groupId>com.netflix.graphql.dgs</groupId>
+			<artifactId>graphql-dgs-spring-boot-starter</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
-		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
-			<version>2.9.0</version>
-		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-			<version>2.6.7</version>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jacoco</groupId>
+			<artifactId>jacoco-maven-plugin</artifactId>
+			<version>0.8.8</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.24</version>
+			<scope>provided</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.0.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>tests-and-coverage</id>
-						<configuration>
-							<executable>mvn</executable>
-							<arguments>
-								<argument>clean</argument>
-								<argument>test-compile</argument>
-								<argument>surefire:test@controller</argument>
-								<argument>jacoco:report@controller</argument>
-								<argument>surefire:test@model</argument>
-								<argument>jacoco:report@model</argument>
-								<argument>surefire:test@persistence</argument>
-								<argument>jacoco:report@persistence</argument>
-							</arguments>
-						</configuration>
-					</execution>
-				</executions>
-				<configuration>
-					<mainClass>com.bluemethod.jabs.jabs.JabsApplication</mainClass>
-					<arguments></arguments>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.8</version>
-				<configuration>
-					<destfile>/target/coverage-reports/jacoco-unit.exec</destfile>
-					<datafile>/target/coverage-reports/jacoco-unit.exec</datafile>
-				</configuration>
-				<executions>
-					<execution>
-						<id>jacoco-initialize</id>
-						<configuration>
-							<!-- throw away the old data with each test run -->
-							<append>false</append>
-						</configuration>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<!-- attached to Maven test phase -->
-					<execution>
-						<id>report</id>
-						<phase>test</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>controller</id>
-						<configuration>
-							<footer>Controller Tier</footer>
-							<title>Controller Tier Test Coverage</title>
-							<outputDirectory>target/site/jacoco/controller</outputDirectory>
-						</configuration>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>persistence</id>
-						<configuration>
-							<footer>Persistence Tier</footer>
-							<title>Persistence Tier Test Coverage</title>
-							<outputDirectory>target/site/jacoco/persistence</outputDirectory>
-						</configuration>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>model</id>
-						<configuration>
-							<footer>Model Tier</footer>
-							<title>Model Tier Test Coverage</title>
-							<outputDirectory>target/site/jacoco/model</outputDirectory>
-						</configuration>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>jacoco-check</id>
-						<goals>
-						  <goal>check</goal>
-						</goals>
-						<configuration>
-							<rules>
-							  <rule>
-								  <element>BUNDLE</element>
-								  <limits>
-								 <limit>
-								   <counter>INSTRUCTION</counter>
-								   <value>COVEREDRATIO</value>
-								   <minimum>0.90</minimum>
-								 </limit>
-							 </limits>
-								 </rule>
-								</rules>
-								<processTypes>
-									<web>java $JAVA_OPTS -cp target/classes:target/dependency/* Main</web>
-								</processTypes>
-					   </configuration>
-			 		</execution>
-				</executions>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${project.parent.version}</version>
 			</plugin>
 		</plugins>
 	</build>
-	<repositories>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</pluginRepository>
-	</pluginRepositories>
 
 </project>
