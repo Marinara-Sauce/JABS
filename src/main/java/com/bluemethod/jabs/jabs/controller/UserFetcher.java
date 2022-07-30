@@ -2,6 +2,7 @@ package com.bluemethod.jabs.jabs.controller;
 
 import com.bluemethod.jabs.jabs.model.Token;
 import com.bluemethod.jabs.jabs.model.User;
+import com.bluemethod.jabs.jabs.persistence.TokenRepository;
 import com.bluemethod.jabs.jabs.persistence.UserRepository;
 import com.netflix.graphql.dgs.DgsComponent;
 import com.netflix.graphql.dgs.DgsQuery;
@@ -27,12 +28,31 @@ public class UserFetcher {
     }
 
     @DgsQuery
-    public Token login(@InputArgument String username, @InputArgument String password) {
-        return userRepo.login(username, password);
+    public String login(@InputArgument String username, @InputArgument String password) {
+        User u = userRepo.login(username, password);
+
+        if (u != null) {
+            String token = Token.generateToken();
+            //TODO: Pull these expiration values from a config
+            Token newToken = new Token(token, u.getId(), 1, 0);
+            tokenRepo.save(newToken);
+            return token;
+        }
+
+        return null;
     }
 
     @DgsQuery
     public User authorize(@InputArgument String token) {
-        return userRepo.authorize(token);
+        Token t = tokenRepo.authorize(token);
+
+        if (t == null) return null;
+
+        if (t.isExpired()) {
+            tokenRepo.delete(t);
+            return null;
+        }
+
+        return userRepo.findById(t.getUserId()).orElse(null);
     }
 }

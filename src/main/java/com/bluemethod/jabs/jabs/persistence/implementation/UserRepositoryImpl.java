@@ -38,15 +38,16 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
 
     /**
      * Logs in based on a username and password, generates a new
-     * token upon login
+     * token upon login, returning that token
+     *
+     * That token is then used for any user-specific actions
      */
     @Override
-    public Token login(String username, String password) {
+    public User login(String username, String password) {
         User target = findUserByUsername(username);
 
         if (target.getPasswordHash().equals(Crypto.sha256Hash(password))) {
-            //TODO: Pull these values from a config
-            return new Token(target.getId(), 1, 0);
+            return target;
         }
 
         return null;

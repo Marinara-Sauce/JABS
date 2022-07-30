@@ -26,8 +26,6 @@ public class Token {
     private int userId;
     private String expirationDate;
 
-    private final Random RANDOM = new Random();
-
     /**
      * Generates a new token, generating the expiration date
      *
@@ -35,8 +33,8 @@ public class Token {
      * @param daysToExpire the days till it expires
      * @param hoursToExpire the hours till it expires
      */
-    public Token(int userId, int daysToExpire, int hoursToExpire) {
-        this.tokenHash = generateToken();
+    public Token(String token, int userId, int daysToExpire, int hoursToExpire) {
+        this.tokenHash = Crypto.sha256Hash(token);
         this.userId = userId;
 
         Calendar cal = Calendar.getInstance();
@@ -61,9 +59,15 @@ public class Token {
         return today.after(exp);
     }
 
-    private String generateToken() {
+    /**
+     * Returns an un-hashed random long as a token
+     * This is stored as an SHA-256 hash
+     *
+     * @return the token as a string
+     */
+    public static String generateToken() {
         //TODO: Use a secure method for RNG
-        long token = RANDOM.nextLong();
-        return Crypto.sha256Hash(Long.toString(token));
+        long token = new Random().nextLong();
+        return Long.toString(token);
     }
 }

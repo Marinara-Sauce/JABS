@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer>, UserRepositoryCustom {
     User findUserByUsername(String username);
-    Token login(String username, String password);
+    User login(String username, String password);
 }

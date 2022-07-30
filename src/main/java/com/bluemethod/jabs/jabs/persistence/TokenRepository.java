@@ -7,5 +7,5 @@ import com.bluemethod.jabs.jabs.persistence.custom.UserRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TokenRepository extends JpaRepository<Token, Integer>, TokenRepositoryCustom {
-    User authorize(String token);
+    Token authorize(String token);
 }
