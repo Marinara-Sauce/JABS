@@ -22,4 +22,9 @@ public class UserFetcher {
     public User getUserByUsername(@InputArgument String username) {
         return userRepo.findUserByUsername(username);
     }
+
+    @DgsQuery
+    public User login(@InputArgument String username, @InputArgument String password) {
+        return userRepo.login(username, password);
+    }
 }

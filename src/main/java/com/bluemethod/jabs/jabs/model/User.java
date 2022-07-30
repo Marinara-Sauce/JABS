@@ -1,6 +1,6 @@
 package com.bluemethod.jabs.jabs.model;
 
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.Entity;
@@ -10,6 +10,7 @@ import javax.persistence.Id;
 
 @Entity
 @Component
+@Getter
 public class User {
 
     @Id

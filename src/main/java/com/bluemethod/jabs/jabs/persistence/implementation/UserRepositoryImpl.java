@@ -1,7 +1,9 @@
 package com.bluemethod.jabs.jabs.persistence.implementation;
 
+import com.bluemethod.jabs.jabs.model.Token;
 import com.bluemethod.jabs.jabs.model.User;
 import com.bluemethod.jabs.jabs.persistence.custom.UserRepositoryCustom;
+import com.bluemethod.jabs.jabs.utils.Crypto;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,5 +34,21 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
            } catch (Exception e) {
                return null;
            }
+    }
+
+    /**
+     * Logs in based on a username and password, generates a new
+     * token upon login
+     */
+    @Override
+    public Token login(String username, String password) {
+        User target = findUserByUsername(username);
+
+        if (target.getPasswordHash().equals(Crypto.sha256Hash(password))) {
+            //TODO: Pull these values from a config
+            return new Token(target.getId(), 1, 0);
+        }
+
+        return null;
     }
 }
