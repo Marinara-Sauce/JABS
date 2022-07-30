@@ -5,6 +5,8 @@ type Query {
     getUserByUsername(username: String!): User
     "Logs into a user, returning a token"
     login(username: String! password: String!): Token
+    "Authorizes a user based on their token"
+    authorize(token: String): User
 }
 
 type User {
