@@ -1,10 +1,12 @@
 package com.bluemethod.jabs.jabs.controller;
 
+import com.bluemethod.jabs.jabs.exceptions.InvalidTokenException;
 import com.bluemethod.jabs.jabs.model.Token;
 import com.bluemethod.jabs.jabs.model.User;
 import com.bluemethod.jabs.jabs.persistence.TokenRepository;
 import com.bluemethod.jabs.jabs.persistence.UserRepository;
 import com.netflix.graphql.dgs.DgsComponent;
+import com.netflix.graphql.dgs.DgsMutation;
 import com.netflix.graphql.dgs.DgsQuery;
 import com.netflix.graphql.dgs.InputArgument;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,14 +45,16 @@ public class UserFetcher {
     }
 
     @DgsQuery
-    public User authorize(@InputArgument String token) {
+    public User authorize(@InputArgument String token) throws InvalidTokenException {
         Token t = tokenRepo.authorize(token);
 
-        if (t == null) return null;
+        if (t == null) {
+            throw new InvalidTokenException("Invalid Token");
+        }
 
         if (t.isExpired()) {
             tokenRepo.delete(t);
-            return null;
+            throw new InvalidTokenException("Expired Token");
         }
 
         return userRepo.findById(t.getUserId()).orElse(null);
